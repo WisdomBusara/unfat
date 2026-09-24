@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaza — Coming Soon</title>
+<meta name="description" content="Kaza: evidence-based fitness tracking with AI-powered coaching. Part of Wisdom Busara.">
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #171a21;
+    --text: #f3f4f6;
+    --muted: #9ca3af;
+    --accent: #6366f1;
+    --accent2: #10b981;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #6366f1;
+      --accent2: #10b981;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+  }
+  .wordmark {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+  }
+  .tagline {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid rgba(128,128,128,0.2);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .footer {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="wordmark">Kaza</div>
+    <div class="tagline">Swahili for "tighten, strengthen"</div>
+    <div class="status"><span class="dot"></span> Building in public</div>
+    <p class="desc">
+      Evidence-based fitness tracking — weight, strength, and progress photos
+      analyzed with AI coaching. No fads, no guesswork. Just measured progress.
+    </p>
+    <div class="footer">
+      Part of <a href="https://wisdombusara.com">Wisdom Busara</a>
+    </div>
+  </div>
+</body>
+</html>
