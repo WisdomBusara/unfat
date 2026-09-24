@@ -5,13 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kaza — Coming Soon</title>
 <meta name="description" content="Kaza: evidence-based fitness tracking with AI-powered coaching. Part of Wisdom Busara.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
+  /* Same palette as the app: near-black base, single emerald accent. */
   :root {
-    --bg: #0f1115;
-    --card: #171a21;
+    --bg: #0b0f0d;
+    --card: #151a17;
     --text: #f3f4f6;
     --muted: #9ca3af;
-    --accent: #6366f1;
+    --accent: #34d399;
     --accent2: #10b981;
   }
   @media (prefers-color-scheme: light) {
@@ -20,8 +24,8 @@
       --card: #ffffff;
       --text: #111827;
       --muted: #6b7280;
-      --accent: #6366f1;
-      --accent2: #10b981;
+      --accent: #10b981;
+      --accent2: #34d399;
     }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,10 +45,11 @@
     text-align: center;
   }
   .wordmark {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
     font-size: 56px;
     font-weight: 800;
     letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

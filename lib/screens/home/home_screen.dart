@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/weight_provider.dart';
 import '../../providers/workout_provider.dart';
+import '../../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -107,22 +108,24 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: _StatCard(
-                title: 'Current Weight',
+                title: 'Current weight',
                 value: latestWeight != null
-                    ? '${latestWeight.weight.toStringAsFixed(1)} kg'
-                    : 'N/A',
-                icon: Icons.scale,
+                    ? latestWeight.weight.toStringAsFixed(1)
+                    : '—',
+                unit: 'kg',
+                icon: Icons.monitor_weight_outlined,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
-                title: 'This Week',
-                value: '$workoutCount workouts',
+                title: 'This week',
+                value: '$workoutCount',
+                unit: workoutCount == 1 ? 'workout' : 'workouts',
                 subtitle: weightChange != null
-                    ? '${weightChange.toStringAsFixed(1)} kg change'
-                    : 'No change',
-                icon: Icons.trending_down,
+                    ? '${weightChange >= 0 ? '-' : '+'}${weightChange.abs().toStringAsFixed(1)} kg'
+                    : null,
+                icon: Icons.bolt_outlined,
               ),
             ),
           ],
@@ -237,15 +240,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+/// The number is the hero element here, not the label — oversized tabular
+/// numerals per the current dashboard-design pattern, with the unit set
+/// small and inline rather than folded into one string.
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
+  final String unit;
   final String? subtitle;
   final IconData icon;
 
   const _StatCard({
     required this.title,
     required this.value,
+    required this.unit,
     required this.icon,
     this.subtitle,
   });
@@ -258,10 +266,23 @@ class _StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 24, color: Theme.of(context).primaryColor),
-            const SizedBox(height: 8),
-            Text(title, style: Theme.of(context).textTheme.bodySmall),
-            Text(value, style: Theme.of(context).textTheme.headlineSmall),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.bodySmall),
+                Icon(icon, size: 18, color: AppTheme.accent),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(value, style: AppTheme.statNumberStyle(context)),
+                const SizedBox(width: 4),
+                Text(unit, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
             if (subtitle != null) ...[
               const SizedBox(height: 4),
               Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
@@ -294,12 +315,17 @@ class _ActionButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
+            color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.black.withOpacity(0.08),
+            ),
           ),
           child: Column(
             children: [
-              Icon(icon, color: Theme.of(context).primaryColor),
+              Icon(icon, color: AppTheme.accent),
               const SizedBox(height: 4),
               Text(label, style: Theme.of(context).textTheme.bodySmall,
                   textAlign: TextAlign.center),

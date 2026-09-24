@@ -35,7 +35,11 @@ class FitnessApp extends StatelessWidget {
         title: 'Kaza',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        // Dark-mode-first, matching the rest of the market (Whoop, Fitbod,
+        // Strava) — light theme stays fully built out for anyone who
+        // switches, but dark is the designed default rather than following
+        // system.
+        themeMode: ThemeMode.dark,
         home: Consumer<AuthProvider>(
           builder: (context, auth, _) {
             if (auth.isCheckingSession) {
