@@ -1,0 +1,34 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: kaza-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+
+  api:
+    build: .
+    container_name: kaza-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - minio
+    # If Postgres runs natively on the VPS host (not in Docker), keep
+    # DB_HOST=host.docker.internal in .env and uncomment this so the
+    # container can reach it on Linux (Docker Desktop on Mac/Windows
+    # resolves host.docker.internal automatically).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  minio_data:
