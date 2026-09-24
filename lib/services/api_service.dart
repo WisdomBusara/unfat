@@ -10,6 +10,10 @@ import '../models/goal.dart';
 import '../models/nutrition.dart';
 import '../models/progress_photo.dart';
 
+// Re-exported so screens that only import ApiService can still catch
+// ApiException without a second import.
+export 'api_client.dart' show ApiException;
+
 class ApiService {
   final Dio _dio = ApiClient().dio;
 

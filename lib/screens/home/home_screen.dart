@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/weight_provider.dart';
 import '../../providers/workout_provider.dart';
 import '../../theme/app_theme.dart';
-import 'package:intl/intl.dart';
+import '../nutrition/meal_log_screen.dart';
+import '../nutrition/nutrition_screen.dart';
+import '../photos/photos_screen.dart';
+import '../profile/profile_screen.dart';
+import '../workouts/workout_log_screen.dart';
+import '../workouts/workouts_screen.dart';
 
+/// Bottom-nav tab container. Each tab keeps its own state via IndexedStack
+/// rather than being rebuilt on every switch.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -17,10 +25,47 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedTab = 0;
 
+  final _tabs = const [
+    _DashboardTab(),
+    WorkoutsScreen(),
+    PhotosScreen(),
+    NutritionScreen(),
+    ProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(index: _selectedTab, children: _tabs),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedTab,
+        onTap: (index) => setState(() => _selectedTab = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: AppTheme.accent,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.fitness_center_outlined), label: 'Workouts'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt_outlined), label: 'Photos'),
+          BottomNavigationBarItem(icon: Icon(Icons.restaurant_outlined), label: 'Nutrition'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardTab extends StatefulWidget {
+  const _DashboardTab();
+
+  @override
+  State<_DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<_DashboardTab> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserData());
   }
 
   void _loadUserData() {
@@ -35,46 +80,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kaza'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthProvider>().signOut();
-            },
+      appBar: AppBar(title: const Text('Kaza')),
+      body: RefreshIndicator(
+        onRefresh: () async => _loadUserData(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildGreeting(),
+              const SizedBox(height: 24),
+              _buildQuickStats(),
+              const SizedBox(height: 24),
+              _buildActionButtons(context),
+              const SizedBox(height: 24),
+              _buildRecentWeights(),
+              const SizedBox(height: 24),
+              _buildRecentWorkouts(),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildGreeting(),
-            const SizedBox(height: 24),
-            _buildQuickStats(),
-            const SizedBox(height: 24),
-            _buildActionButtons(),
-            const SizedBox(height: 24),
-            _buildRecentWeights(),
-            const SizedBox(height: 24),
-            _buildRecentWorkouts(),
-          ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedTab,
-        onTap: (index) {
-          setState(() => _selectedTab = index);
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: 'Workouts'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Photos'),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant), label: 'Nutrition'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
       ),
     );
   }
@@ -109,9 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: _StatCard(
                 title: 'Current weight',
-                value: latestWeight != null
-                    ? latestWeight.weight.toStringAsFixed(1)
-                    : '—',
+                value: latestWeight != null ? latestWeight.weight.toStringAsFixed(1) : '—',
                 unit: 'kg',
                 icon: Icons.monitor_weight_outlined,
               ),
@@ -134,35 +158,44 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quick Actions', style: Theme.of(context).textTheme.headlineSmall),
+        Text('Quick actions', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _ActionButton(
-                icon: Icons.add_a_photo,
-                label: 'Take Photo',
-                onTap: () {},
+                icon: Icons.add_a_photo_outlined,
+                label: 'Take photo',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PhotosScreen()),
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _ActionButton(
-                icon: Icons.fitness_center,
-                label: 'Log Workout',
-                onTap: () {},
+                icon: Icons.fitness_center_outlined,
+                label: 'Log workout',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const WorkoutLogScreen()),
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _ActionButton(
-                icon: Icons.restaurant,
-                label: 'Log Meal',
-                onTap: () {},
+                icon: Icons.restaurant_outlined,
+                label: 'Log meal',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MealLogScreen()),
+                ),
               ),
             ),
           ],
@@ -176,26 +209,23 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, weightProvider, _) {
         final weights = weightProvider.weightHistory.take(5).toList();
 
-        if (weights.isEmpty) {
-          return const SizedBox.shrink();
-        }
+        if (weights.isEmpty) return const SizedBox.shrink();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Recent Weights', style: Theme.of(context).textTheme.headlineSmall),
+            Text('Recent weights', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 12),
             ...weights.map((w) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(DateFormat('MMM d, yyyy').format(w.date)),
-                  Text('${w.weight} kg',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-            )),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(DateFormat('MMM d, yyyy').format(w.date)),
+                      Text('${w.weight} kg', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                )),
           ],
         );
       },
@@ -207,32 +237,30 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, workoutProvider, _) {
         final workouts = workoutProvider.workoutHistory.take(5).toList();
 
-        if (workouts.isEmpty) {
-          return const SizedBox.shrink();
-        }
+        if (workouts.isEmpty) return const SizedBox.shrink();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Recent Workouts', style: Theme.of(context).textTheme.headlineSmall),
+            Text('Recent workouts', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 12),
             ...workouts.map((w) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(w.workoutType, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      Text(DateFormat('MMM d').format(w.date),
-                          style: Theme.of(context).textTheme.bodySmall),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(w.workoutType, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(DateFormat('MMM d').format(w.date),
+                              style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                      Text('${w.durationMinutes} min'),
                     ],
                   ),
-                  Text('${w.durationMinutes} min'),
-                ],
-              ),
-            )),
+                )),
           ],
         );
       },
@@ -327,8 +355,7 @@ class _ActionButton extends StatelessWidget {
             children: [
               Icon(icon, color: AppTheme.accent),
               const SizedBox(height: 4),
-              Text(label, style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center),
+              Text(label, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
             ],
           ),
         ),
