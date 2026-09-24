@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import '../models/workout.dart';
-import '../services/firebase_service.dart';
+import '../services/api_service.dart';
 
 class WorkoutProvider extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  final ApiService _apiService = ApiService();
   List<WorkoutSession> _workoutHistory = [];
   bool _isLoading = false;
 
   List<WorkoutSession> get workoutHistory => _workoutHistory;
   bool get isLoading => _isLoading;
 
-  Future<void> loadWorkoutHistory(String userId, {int days = 90}) async {
+  Future<void> loadWorkoutHistory({int days = 90}) async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      _workoutHistory = await _firebaseService.getWorkoutHistory(userId, days: days);
+      _workoutHistory = await _apiService.getWorkoutHistory(days: days);
       notifyListeners();
     } catch (e) {
       print('Error loading workout history: $e');
@@ -27,8 +27,8 @@ class WorkoutProvider extends ChangeNotifier {
 
   Future<void> logWorkout(WorkoutSession workout) async {
     try {
-      await _firebaseService.logWorkout(workout);
-      _workoutHistory.insert(0, workout);
+      final saved = await _apiService.logWorkout(workout);
+      _workoutHistory.insert(0, saved);
       notifyListeners();
     } catch (e) {
       print('Error logging workout: $e');

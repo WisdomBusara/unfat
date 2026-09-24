@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Food {
   final String id;
   final String name;
@@ -25,7 +23,7 @@ class Food {
     this.cuisine,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
@@ -40,18 +38,18 @@ class Food {
     };
   }
 
-  factory Food.fromMap(Map<String, dynamic> map) {
+  factory Food.fromJson(Map<String, dynamic> json) {
     return Food(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      servingSize: (map['servingSize'] ?? 100).toDouble(),
-      calories: map['calories'] ?? 0,
-      protein: (map['protein'] ?? 0).toDouble(),
-      carbs: (map['carbs'] ?? 0).toDouble(),
-      fat: (map['fat'] ?? 0).toDouble(),
-      fiber: (map['fiber'] ?? 0).toDouble(),
-      category: map['category'] ?? 'other',
-      cuisine: map['cuisine'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      servingSize: (json['servingSize'] ?? json['serving_size'] ?? 100).toDouble(),
+      calories: json['calories'] ?? 0,
+      protein: (json['protein'] ?? 0).toDouble(),
+      carbs: (json['carbs'] ?? 0).toDouble(),
+      fat: (json['fat'] ?? 0).toDouble(),
+      fiber: (json['fiber'] ?? 0).toDouble(),
+      category: json['category'] ?? 'other',
+      cuisine: json['cuisine'],
     );
   }
 }
@@ -78,26 +76,26 @@ class MealEntry {
   double totalCarbs() => foods.fold(0, (sum, food) => sum + food.totalCarbs());
   double totalFat() => foods.fold(0, (sum, food) => sum + food.totalFat());
 
-  factory MealEntry.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final foodsList = (data['foods'] as List?)?.map((f) => FoodLog.fromMap(f as Map<String, dynamic>)).toList() ?? [];
+  factory MealEntry.fromJson(Map<String, dynamic> json) {
+    final foodsList = (json['foods'] as List? ?? [])
+        .map((f) => FoodLog.fromJson(f as Map<String, dynamic>))
+        .toList();
 
     return MealEntry(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      mealType: data['mealType'] ?? 'lunch',
+      id: json['id'] as String,
+      userId: json['user_id'] ?? '',
+      mealType: json['meal_type'] ?? 'lunch',
       foods: foodsList,
-      date: (data['date'] as Timestamp).toDate(),
-      notes: data['notes'] ?? '',
+      date: DateTime.parse(json['date'] as String),
+      notes: json['notes'] ?? '',
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toCreateJson() {
     return {
-      'userId': userId,
       'mealType': mealType,
-      'foods': foods.map((f) => f.toMap()).toList(),
-      'date': Timestamp.fromDate(date),
+      'foods': foods.map((f) => f.toJson()).toList(),
+      'date': date.toIso8601String(),
       'notes': notes,
     };
   }
@@ -119,19 +117,19 @@ class FoodLog {
   double totalCarbs() => food.carbs * quantity;
   double totalFat() => food.fat * quantity;
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
-      'food': food.toMap(),
+      'food': food.toJson(),
       'quantity': quantity,
       'loggedAt': loggedAt.toIso8601String(),
     };
   }
 
-  factory FoodLog.fromMap(Map<String, dynamic> map) {
+  factory FoodLog.fromJson(Map<String, dynamic> json) {
     return FoodLog(
-      food: Food.fromMap(map['food'] as Map<String, dynamic>),
-      quantity: (map['quantity'] ?? 1).toDouble(),
-      loggedAt: DateTime.parse(map['loggedAt'] as String),
+      food: Food.fromJson(json['food'] as Map<String, dynamic>),
+      quantity: (json['quantity'] ?? 1).toDouble(),
+      loggedAt: DateTime.parse(json['loggedAt'] as String),
     );
   }
 }

@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Goal {
   final String id;
   final String userId;
@@ -33,41 +31,39 @@ class Goal {
     this.completedDate,
   });
 
-  factory Goal.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory Goal.fromJson(Map<String, dynamic> json) {
     return Goal(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      title: data['title'] ?? '',
-      goalType: data['goalType'] ?? 'general_health',
-      targetWeight: data['targetWeight']?.toDouble(),
-      targetReps: data['targetReps'],
-      targetDistance: data['targetDistance']?.toDouble(),
-      startDate: (data['startDate'] as Timestamp).toDate(),
-      targetDate: (data['targetDate'] as Timestamp).toDate(),
-      priority: data['priority'] ?? 'medium',
-      strategies: List<String>.from(data['strategies'] ?? []),
-      notes: data['notes'] ?? '',
-      completed: data['completed'] ?? false,
-      completedDate: data['completedDate'] != null ? (data['completedDate'] as Timestamp).toDate() : null,
+      id: json['id'] as String,
+      userId: json['user_id'] ?? '',
+      title: json['title'] ?? '',
+      goalType: json['goal_type'] ?? 'general_health',
+      targetWeight: (json['target_weight'] as num?)?.toDouble(),
+      targetReps: json['target_reps'],
+      targetDistance: (json['target_distance'] as num?)?.toDouble(),
+      startDate: DateTime.parse(json['start_date'] as String),
+      targetDate: DateTime.parse(json['target_date'] as String),
+      priority: json['priority'] ?? 'medium',
+      strategies: List<String>.from(json['strategies'] ?? []),
+      notes: json['notes'] ?? '',
+      completed: json['completed'] ?? false,
+      completedDate: json['completed_date'] != null
+          ? DateTime.parse(json['completed_date'] as String)
+          : null,
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toCreateJson() {
     return {
-      'userId': userId,
       'title': title,
       'goalType': goalType,
       'targetWeight': targetWeight,
       'targetReps': targetReps,
       'targetDistance': targetDistance,
-      'startDate': Timestamp.fromDate(startDate),
-      'targetDate': Timestamp.fromDate(targetDate),
+      'startDate': startDate.toIso8601String(),
+      'targetDate': targetDate.toIso8601String(),
       'priority': priority,
       'strategies': strategies,
       'notes': notes,
-      'completed': completed,
-      'completedDate': completedDate != null ? Timestamp.fromDate(completedDate!) : null,
     };
   }
 

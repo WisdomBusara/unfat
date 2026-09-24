@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/weight_provider.dart';
@@ -13,11 +11,8 @@ import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   runApp(const FitnessApp());
 }
 
@@ -43,6 +38,11 @@ class FitnessApp extends StatelessWidget {
         themeMode: ThemeMode.system,
         home: Consumer<AuthProvider>(
           builder: (context, auth, _) {
+            if (auth.isCheckingSession) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
             return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
           },
         ),

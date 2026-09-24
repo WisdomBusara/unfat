@@ -24,13 +24,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadUserData() {
     final auth = context.read<AuthProvider>();
-    final user = auth.currentUser;
+    if (auth.currentUser == null) return;
 
-    if (user != null) {
-      context.read<UserProvider>().loadUserProfile(user.uid);
-      context.read<WeightProvider>().loadWeightHistory(user.uid);
-      context.read<WorkoutProvider>().loadWorkoutHistory(user.uid);
-    }
+    context.read<UserProvider>().setFromAuth(auth.currentUser!);
+    context.read<WeightProvider>().loadWeightHistory();
+    context.read<WorkoutProvider>().loadWorkoutHistory();
   }
 
   @override

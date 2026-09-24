@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class UserProfile {
   final String uid;
   final String email;
@@ -39,33 +37,31 @@ class UserProfile {
     required this.updatedAt,
   });
 
-  factory UserProfile.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      uid: doc.id,
-      email: data['email'] ?? '',
-      name: data['name'] ?? '',
-      age: data['age'] ?? 0,
-      sex: data['sex'] ?? 'other',
-      height: (data['height'] ?? 0.0).toDouble(),
-      targetWeight: (data['targetWeight'] ?? 0.0).toDouble(),
-      activityLevel: data['activityLevel'] ?? 'moderate',
-      trainingExperience: data['trainingExperience'] ?? 'beginner',
-      goals: List<String>.from(data['goals'] ?? []),
-      preferredActivities: List<String>.from(data['preferredActivities'] ?? []),
-      availableEquipment: List<String>.from(data['availableEquipment'] ?? []),
-      hasEatingDisorderHistory: data['hasEatingDisorderHistory'] ?? false,
-      hasCardiovascularIssues: data['hasCardiovascularIssues'] ?? false,
-      measurementUnit: data['measurementUnit'] ?? 'metric',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      uid: json['id'] as String,
+      email: json['email'] ?? '',
+      name: json['name'] ?? '',
+      age: json['age'] ?? 0,
+      sex: json['sex'] ?? 'other',
+      height: (json['height'] ?? 0.0).toDouble(),
+      targetWeight: (json['target_weight'] ?? 0.0).toDouble(),
+      activityLevel: json['activity_level'] ?? 'moderate',
+      trainingExperience: json['training_experience'] ?? 'beginner',
+      goals: List<String>.from(json['goals'] ?? []),
+      preferredActivities: List<String>.from(json['preferred_activities'] ?? []),
+      availableEquipment: List<String>.from(json['available_equipment'] ?? []),
+      hasEatingDisorderHistory: json['has_eating_disorder_history'] ?? false,
+      hasCardiovascularIssues: json['has_cardiovascular_issues'] ?? false,
+      measurementUnit: json['measurement_unit'] ?? 'metric',
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  /// Fields accepted by `PUT /users/me` — only the ones the user can edit.
+  Map<String, dynamic> toUpdateJson() {
     return {
-      'email': email,
-      'name': name,
       'age': age,
       'sex': sex,
       'height': height,
@@ -75,11 +71,7 @@ class UserProfile {
       'goals': goals,
       'preferredActivities': preferredActivities,
       'availableEquipment': availableEquipment,
-      'hasEatingDisorderHistory': hasEatingDisorderHistory,
-      'hasCardiovascularIssues': hasCardiovascularIssues,
       'measurementUnit': measurementUnit,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 

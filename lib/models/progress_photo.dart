@@ -1,14 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ProgressPhoto {
   final String id;
   final String userId;
-  final String photoUrl; // Firebase Storage path
+  final String photoUrl;
   final String angle; // 'front', 'side', 'back'
   final DateTime date;
   final double? weight;
   final String notes;
-  final Map<String, dynamic>? aiAnalysis; // Results from Claude API analysis
+  final Map<String, dynamic>? aiAnalysis;
 
   ProgressPhoto({
     required this.id,
@@ -21,40 +19,22 @@ class ProgressPhoto {
     this.aiAnalysis,
   });
 
-  factory ProgressPhoto.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ProgressPhoto.fromJson(Map<String, dynamic> json) {
     return ProgressPhoto(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      photoUrl: data['photoUrl'] ?? '',
-      angle: data['angle'] ?? 'front',
-      date: (data['date'] as Timestamp).toDate(),
-      weight: data['weight']?.toDouble(),
-      notes: data['notes'] ?? '',
-      aiAnalysis: data['aiAnalysis'],
+      id: json['id'] as String,
+      userId: json['user_id'] ?? '',
+      photoUrl: json['photo_url'] ?? '',
+      angle: json['angle'] ?? 'front',
+      date: DateTime.parse(json['date'] as String),
+      weight: (json['weight'] as num?)?.toDouble(),
+      notes: json['notes'] ?? '',
+      aiAnalysis: json['ai_analysis'] as Map<String, dynamic>?,
     );
-  }
-
-  Map<String, dynamic> toFirestore() {
-    return {
-      'userId': userId,
-      'photoUrl': photoUrl,
-      'angle': angle,
-      'date': Timestamp.fromDate(date),
-      'weight': weight,
-      'notes': notes,
-      'aiAnalysis': aiAnalysis,
-    };
   }
 
   String getAIAdvice() {
     if (aiAnalysis == null) return 'Analysis pending...';
+    if (aiAnalysis!.containsKey('error')) return aiAnalysis!['error'] as String;
     return aiAnalysis?['advice'] ?? 'No feedback available';
-  }
-
-  String getProgressSummary() {
-    if (aiAnalysis == null) return 'Analysis pending...';
-    final observations = aiAnalysis?['observations'] ?? [];
-    return observations.isNotEmpty ? observations.join('\n') : 'No observations yet';
   }
 }

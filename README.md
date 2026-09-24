@@ -15,7 +15,7 @@ Part of the [wisdombusara.com](https://wisdombusara.com) family — live at **ka
 
 ### AI & Analytics
 - **Claude AI Integration**: Get evidence-based workout recommendations and nutrition advice
-- **Progress Photo Analysis**: AI-powered feedback on body composition changes
+- **Progress Photo Analysis**: AI-powered vision feedback on body composition changes
 - **Smart Insights**: Data-driven recommendations based on your progress
 
 ### Multiple Fitness Domains
@@ -30,18 +30,29 @@ Part of the [wisdombusara.com](https://wisdombusara.com) family — live at **ka
 ## Tech Stack
 
 - **Frontend**: Flutter 3.x, Dart 3.x
-- **Backend**: Firebase (Auth, Firestore, Storage)
-- **AI**: Claude API for personalized coaching
+- **Backend**: Self-hosted API server ([Dart Frog](https://dartfrog.vgv.dev/)) on your own VPS — see [`backend/`](backend/)
+- **Database**: PostgreSQL
+- **Object storage**: MinIO (S3-compatible), self-hosted
+- **AI**: Claude API, proxied server-side so the key never ships in the app
 - **State Management**: Provider
-- **Storage**: Firebase Cloud Storage for progress photos
+- **Auth**: JWT (access + rotating refresh tokens), bcrypt password hashing — fully self-hosted, no third-party auth provider
+
+## Architecture
+
+```
+Flutter app  ──HTTPS──>  Dart Frog API  ──>  Postgres (all app data)
+(kaza.wisdombusara.com)  (api.wisdombusara.com)  ──>  MinIO (progress photos)
+                                              ──>  Claude API (server-side only)
+```
+
+The Flutter client never talks to Postgres, MinIO, or Anthropic directly — everything goes through the API in `backend/`. See [`backend/README.md`](backend/README.md) for setting that up on your VPS first; the app has nothing to run against until it's live.
 
 ## Getting Started
 
 ### Prerequisites
 - Flutter SDK 3.0+
 - Dart SDK 3.0+
-- Firebase project
-- Claude API key
+- A running instance of the [backend](backend/) (Postgres + MinIO + the API server)
 
 ### Installation
 
@@ -51,32 +62,27 @@ Part of the [wisdombusara.com](https://wisdombusara.com) family — live at **ka
    cd unfat
    ```
 
-2. **Install dependencies**
+2. **Set up the backend first** — see [`backend/README.md`](backend/README.md). You'll end up with an API running at something like `https://api.wisdombusara.com`.
+
+3. **Install Flutter dependencies**
    ```bash
    flutter pub get
    ```
 
-3. **Configure Firebase**
-   - Update `lib/firebase_options.dart` with your Firebase credentials
-   - Download your `google-services.json` and `GoogleService-Info.plist` files
-
-4. **Set up environment variables**
-   - Create `.env` file with your Claude API key:
-     ```
-     CLAUDE_API_KEY=your_api_key_here
-     ```
-
-5. **Run the app**
+4. **Point the app at your API**
    ```bash
-   flutter run
+   flutter run --dart-define=API_BASE_URL=https://api.wisdombusara.com
    ```
+   Omit `--dart-define` during local development to use the default `http://localhost:8080` (matching `dart_frog dev`).
 
 ## Project Structure
 
 ```
 lib/
 ├── main.dart                    # App entry point
-├── models/                      # Data models
+├── config/
+│   └── api_config.dart          # API base URL (overridable via --dart-define)
+├── models/                      # Data models (plain JSON, matches API responses)
 │   ├── user.dart
 │   ├── weight_entry.dart
 │   ├── workout.dart
@@ -84,8 +90,9 @@ lib/
 │   ├── goal.dart
 │   └── progress_photo.dart
 ├── services/                    # Business logic
-│   ├── firebase_service.dart
-│   ├── claude_api_service.dart
+│   ├── api_client.dart          # Dio client: attaches JWT, auto-refreshes on 401
+│   ├── api_service.dart         # All backend calls
+│   ├── token_storage.dart       # Secure storage for access/refresh tokens
 │   └── camera_service.dart
 ├── providers/                   # State management
 │   ├── auth_provider.dart
@@ -105,18 +112,20 @@ lib/
 │   └── profile/
 ├── theme/                       # App theming
 └── widgets/                     # Reusable widgets
+
+backend/                         # Self-hosted API — see backend/README.md
 ```
 
 ## Features in Progress
 
 ### MVP (Phase 1)
-- ✅ User authentication
+- ✅ Self-hosted auth (JWT + bcrypt)
 - ✅ Weight tracking
 - ✅ Basic workout logging
 - ✅ Goal management
-- ✅ Progress photo capture
-- 🔄 Photo analysis with Claude API
-- 🔄 Dashboard & analytics
+- ✅ Progress photo capture + server-side AI vision analysis
+- 🔄 Dashboard & analytics UI
+- 🔄 Workout/nutrition logging screens
 
 ### Phase 2
 - Combat sports tracking
@@ -131,19 +140,6 @@ lib/
 - Research database integration
 - Wearable integration (Apple Health, Fitbit, Garmin)
 - Advanced AI coaching
-
-## Configuration
-
-### Firebase Setup
-1. Create a Firebase project at [firebase.google.com](https://firebase.google.com)
-2. Enable Authentication (Email/Password)
-3. Create Firestore database
-4. Enable Storage
-5. Update credentials in `firebase_options.dart`
-
-### Claude API
-- Get your API key from [console.anthropic.com](https://console.anthropic.com)
-- Store in `.env` file or environment variables
 
 ## Contributing
 
@@ -161,8 +157,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Evidence-based fitness research and protocols
 - Claude AI for personalized coaching
-- Flutter and Dart communities
-- Firebase for backend infrastructure
+- Flutter, Dart, and Dart Frog communities
 
 ## Contact & Support
 

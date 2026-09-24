@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
-import '../../models/user.dart';
 import '../onboarding/onboarding_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -44,28 +43,11 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success && authProvider.currentUser != null) {
-      // Create user profile
-      final userProfile = UserProfile(
-        uid: authProvider.currentUser!.uid,
-        email: _emailController.text.trim(),
-        name: _nameController.text.trim(),
-        age: 30,
-        sex: 'other',
-        height: 170,
-        targetWeight: 75,
-        activityLevel: 'moderate',
-        trainingExperience: 'beginner',
-        goals: [],
-        preferredActivities: [],
-        availableEquipment: [],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      // The backend already created the account + a default profile row on
+      // signup; sync it into UserProvider so the rest of the app can read
+      // it, then send the user to onboarding to fill in the real details.
+      context.read<UserProvider>().setFromAuth(authProvider.currentUser!);
 
-      context.read<UserProvider>().createUserProfile(userProfile);
-
-      // Navigate to onboarding
-      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const OnboardingScreen()),

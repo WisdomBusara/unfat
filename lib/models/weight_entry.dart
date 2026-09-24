@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class WeightEntry {
   final String id;
   final String userId;
@@ -19,26 +17,24 @@ class WeightEntry {
     this.notes = '',
   });
 
-  factory WeightEntry.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory WeightEntry.fromJson(Map<String, dynamic> json) {
     return WeightEntry(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      weight: (data['weight'] ?? 0.0).toDouble(),
-      waistCircumference: data['waistCircumference']?.toDouble(),
-      bodyFatPercentage: data['bodyFatPercentage']?.toDouble(),
-      date: (data['date'] as Timestamp).toDate(),
-      notes: data['notes'] ?? '',
+      id: json['id'] as String,
+      userId: json['user_id'] ?? '',
+      weight: (json['weight'] ?? 0.0).toDouble(),
+      waistCircumference: (json['waist_circumference'] as num?)?.toDouble(),
+      bodyFatPercentage: (json['body_fat_percentage'] as num?)?.toDouble(),
+      date: DateTime.parse(json['date'] as String),
+      notes: json['notes'] ?? '',
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toCreateJson() {
     return {
-      'userId': userId,
       'weight': weight,
       'waistCircumference': waistCircumference,
       'bodyFatPercentage': bodyFatPercentage,
-      'date': Timestamp.fromDate(date),
+      'date': date.toIso8601String(),
       'notes': notes,
     };
   }

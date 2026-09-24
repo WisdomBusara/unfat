@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Exercise {
   final String id;
   final String name;
@@ -19,7 +17,7 @@ class Exercise {
     this.notes = '',
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
@@ -31,15 +29,15 @@ class Exercise {
     };
   }
 
-  factory Exercise.fromMap(Map<String, dynamic> map) {
+  factory Exercise.fromJson(Map<String, dynamic> json) {
     return Exercise(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      category: map['category'] ?? 'resistance',
-      targetMuscles: List<String>.from(map['targetMuscles'] ?? []),
-      equipment: map['equipment'],
-      difficulty: map['difficulty'] ?? 'intermediate',
-      notes: map['notes'] ?? '',
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      category: json['category'] ?? 'resistance',
+      targetMuscles: List<String>.from(json['targetMuscles'] ?? json['target_muscles'] ?? []),
+      equipment: json['equipment'],
+      difficulty: json['difficulty'] ?? 'intermediate',
+      notes: json['notes'] ?? '',
     );
   }
 }
@@ -61,7 +59,7 @@ class WorkoutSet {
     this.notes = '',
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'setNumber': setNumber,
       'reps': reps,
@@ -72,14 +70,14 @@ class WorkoutSet {
     };
   }
 
-  factory WorkoutSet.fromMap(Map<String, dynamic> map) {
+  factory WorkoutSet.fromJson(Map<String, dynamic> json) {
     return WorkoutSet(
-      setNumber: map['setNumber'] ?? 0,
-      reps: map['reps'],
-      weight: map['weight']?.toDouble(),
-      durationSeconds: map['durationSeconds'],
-      distance: map['distance'],
-      notes: map['notes'] ?? '',
+      setNumber: json['setNumber'] ?? json['set_number'] ?? 0,
+      reps: json['reps'],
+      weight: (json['weight'] as num?)?.toDouble(),
+      durationSeconds: json['durationSeconds'] ?? json['duration_seconds'],
+      distance: json['distance'],
+      notes: json['notes'] ?? '',
     );
   }
 }
@@ -111,33 +109,37 @@ class WorkoutSession {
     this.completed = true,
   });
 
-  factory WorkoutSession.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final exercisesList = (data['exercises'] as List?)?.map((e) => Exercise.fromMap(e as Map<String, dynamic>)).toList() ?? [];
-    final setsList = (data['sets'] as List?)?.map((setGroup) => (setGroup as List).map((s) => WorkoutSet.fromMap(s as Map<String, dynamic>)).toList()).toList() ?? [];
+  factory WorkoutSession.fromJson(Map<String, dynamic> json) {
+    final exercisesList = (json['exercises'] as List? ?? [])
+        .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final setsList = (json['sets'] as List? ?? [])
+        .map((setGroup) => (setGroup as List)
+            .map((s) => WorkoutSet.fromJson(s as Map<String, dynamic>))
+            .toList())
+        .toList();
 
     return WorkoutSession(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      date: (data['date'] as Timestamp).toDate(),
-      workoutType: data['workoutType'] ?? 'strength',
+      id: json['id'] as String,
+      userId: json['user_id'] ?? '',
+      date: DateTime.parse(json['date'] as String),
+      workoutType: json['workout_type'] ?? 'strength',
       exercises: exercisesList,
       sets: setsList,
-      durationMinutes: data['durationMinutes'] ?? 0,
-      caloriesBurned: data['caloriesBurned'],
-      notes: data['notes'],
-      rpe: data['rpe']?.toDouble(),
-      completed: data['completed'] ?? true,
+      durationMinutes: json['duration_minutes'] ?? 0,
+      caloriesBurned: json['calories_burned'],
+      notes: json['notes'],
+      rpe: (json['rpe'] as num?)?.toDouble(),
+      completed: json['completed'] ?? true,
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toCreateJson() {
     return {
-      'userId': userId,
-      'date': Timestamp.fromDate(date),
+      'date': date.toIso8601String(),
       'workoutType': workoutType,
-      'exercises': exercises.map((e) => e.toMap()).toList(),
-      'sets': sets.map((setGroup) => setGroup.map((s) => s.toMap()).toList()).toList(),
+      'exercises': exercises.map((e) => e.toJson()).toList(),
+      'sets': sets.map((setGroup) => setGroup.map((s) => s.toJson()).toList()).toList(),
       'durationMinutes': durationMinutes,
       'caloriesBurned': caloriesBurned,
       'notes': notes,

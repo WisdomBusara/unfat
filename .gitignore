@@ -99,7 +99,3 @@ coverage/
 .env
 .env.local
 .env.*.local
-
-# Firebase
-google-services.json
-GoogleService-Info.plist

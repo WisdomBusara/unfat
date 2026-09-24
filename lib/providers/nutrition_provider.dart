@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import '../models/nutrition.dart';
-import '../services/firebase_service.dart';
+import '../services/api_service.dart';
 
 class NutritionProvider extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  final ApiService _apiService = ApiService();
   Map<DateTime, DailyNutrition> _nutritionHistory = {};
   bool _isLoading = false;
 
   Map<DateTime, DailyNutrition> get nutritionHistory => _nutritionHistory;
   bool get isLoading => _isLoading;
 
-  Future<void> loadDailyNutrition(String userId, DateTime date) async {
+  Future<void> loadDailyNutrition(DateTime date) async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      final meals = await _firebaseService.getDailyMeals(userId, date);
+      final meals = await _apiService.getDailyMeals(date);
       final dateKey = DateTime(date.year, date.month, date.day);
       _nutritionHistory[dateKey] = DailyNutrition(date: dateKey, meals: meals);
       notifyListeners();
@@ -29,13 +29,13 @@ class NutritionProvider extends ChangeNotifier {
 
   Future<void> logMeal(MealEntry meal) async {
     try {
-      await _firebaseService.logMeal(meal);
-      final dateKey = DateTime(meal.date.year, meal.date.month, meal.date.day);
+      final saved = await _apiService.logMeal(meal);
+      final dateKey = DateTime(saved.date.year, saved.date.month, saved.date.day);
 
       if (_nutritionHistory.containsKey(dateKey)) {
-        _nutritionHistory[dateKey]!.meals.add(meal);
+        _nutritionHistory[dateKey]!.meals.add(saved);
       } else {
-        _nutritionHistory[dateKey] = DailyNutrition(date: dateKey, meals: [meal]);
+        _nutritionHistory[dateKey] = DailyNutrition(date: dateKey, meals: [saved]);
       }
       notifyListeners();
     } catch (e) {

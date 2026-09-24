@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/progress_photo.dart';
-import '../models/user.dart';
-import '../services/firebase_service.dart';
-import '../services/claude_api_service.dart';
+import '../services/api_service.dart';
 
 class PhotoProvider extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
-  late ClaudeAPIService _claudeService;
+  final ApiService _apiService = ApiService();
 
   Map<String, List<ProgressPhoto>> _photosByAngle = {
     'front': [],
@@ -14,89 +11,65 @@ class PhotoProvider extends ChangeNotifier {
     'back': [],
   };
   bool _isLoading = false;
+  bool _isUploading = false;
   String? _uploadError;
 
   Map<String, List<ProgressPhoto>> get photosByAngle => _photosByAngle;
   bool get isLoading => _isLoading;
+  bool get isUploading => _isUploading;
   String? get uploadError => _uploadError;
 
-  PhotoProvider(String claudeApiKey) {
-    _claudeService = ClaudeAPIService(claudeApiKey);
-  }
-
-  Future<void> loadProgressPhotos(String userId) async {
+  Future<void> loadProgressPhotos() async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      for (final angle in ['front', 'side', 'back']) {
-        _photosByAngle[angle] = await _firebaseService.getProgressPhotos(
-          userId,
-          angle: angle,
-        );
-      }
+      final all = await _apiService.getProgressPhotos();
+      _photosByAngle = {
+        'front': all.where((p) => p.angle == 'front').toList(),
+        'side': all.where((p) => p.angle == 'side').toList(),
+        'back': all.where((p) => p.angle == 'back').toList(),
+      };
       notifyListeners();
     } catch (e) {
       print('Error loading progress photos: $e');
-      _uploadError = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> uploadProgressPhoto(
-    String userId,
-    String filePath,
-    String angle,
-    UserProfile userProfile, {
+  /// Uploads the photo; the backend stores it in MinIO and runs Claude
+  /// vision analysis before returning, so this resolves with the finished
+  /// AI feedback already attached.
+  Future<ProgressPhoto?> uploadProgressPhoto({
+    required String filePath,
+    required String angle,
     double? weight,
     String? notes,
   }) async {
     try {
-      _isLoading = true;
+      _isUploading = true;
       _uploadError = null;
       notifyListeners();
 
-      // Upload to Firebase Storage
-      final photoUrl = await _firebaseService.uploadProgressPhoto(userId, filePath);
-
-      // Create photo entry
-      final photo = ProgressPhoto(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: userId,
-        photoUrl: photoUrl,
+      final photo = await _apiService.uploadProgressPhoto(
+        filePath: filePath,
         angle: angle,
-        date: DateTime.now(),
         weight: weight,
-        notes: notes ?? '',
+        notes: notes,
       );
 
-      // Analyze with Claude
-      final previousPhoto = _photosByAngle[angle]?.isNotEmpty ?? false
-          ? _photosByAngle[angle]!.first
-          : null;
-
-      final analysis = await _claudeService.analyzeProgressPhoto(
-        photo,
-        userProfile,
-        previousPhoto: previousPhoto,
-      );
-
-      photo.aiAnalysis?.addAll(analysis);
-
-      // Save to Firestore
-      await _firebaseService.saveProgressPhoto(photo);
-
-      // Update local list
       _photosByAngle[angle]?.insert(0, photo);
       notifyListeners();
+      return photo;
     } catch (e) {
       _uploadError = e.toString();
       print('Error uploading photo: $e');
       notifyListeners();
+      return null;
     } finally {
-      _isLoading = false;
+      _isUploading = false;
       notifyListeners();
     }
   }

@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 import '../models/weight_entry.dart';
-import '../services/firebase_service.dart';
+import '../services/api_service.dart';
 
 class WeightProvider extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  final ApiService _apiService = ApiService();
   List<WeightEntry> _weightHistory = [];
-  WeightEntry? _latestWeight;
   bool _isLoading = false;
 
   List<WeightEntry> get weightHistory => _weightHistory;
-  WeightEntry? get latestWeight => _latestWeight;
+  WeightEntry? get latestWeight => _weightHistory.isEmpty ? null : _weightHistory.first;
   bool get isLoading => _isLoading;
 
-  Future<void> loadWeightHistory(String userId, {int days = 90}) async {
+  Future<void> loadWeightHistory({int days = 90}) async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      _weightHistory = await _firebaseService.getWeightHistory(userId, days: days);
-      _latestWeight = await _firebaseService.getLatestWeight(userId);
+      _weightHistory = await _apiService.getWeightHistory(days: days);
       notifyListeners();
     } catch (e) {
       print('Error loading weight history: $e');
@@ -30,9 +28,8 @@ class WeightProvider extends ChangeNotifier {
 
   Future<void> addWeightEntry(WeightEntry entry) async {
     try {
-      await _firebaseService.addWeightEntry(entry);
-      _weightHistory.insert(0, entry);
-      _latestWeight = entry;
+      final saved = await _apiService.addWeightEntry(entry);
+      _weightHistory.insert(0, saved);
       notifyListeners();
     } catch (e) {
       print('Error adding weight entry: $e');

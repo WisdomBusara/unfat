@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
-import '../services/firebase_service.dart';
+import '../services/api_service.dart';
 
 class UserProvider extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  final ApiService _apiService = ApiService();
   UserProfile? _userProfile;
   bool _isLoading = false;
 
   UserProfile? get userProfile => _userProfile;
   bool get isLoading => _isLoading;
 
-  Future<void> loadUserProfile(String uid) async {
+  void setFromAuth(UserProfile profile) {
+    _userProfile = profile;
+    notifyListeners();
+  }
+
+  Future<void> loadUserProfile() async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      _userProfile = await _firebaseService.getUserProfile(uid);
+      _userProfile = await _apiService.getUserProfile();
       notifyListeners();
     } catch (e) {
       print('Error loading user profile: $e');
@@ -25,20 +30,9 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> createUserProfile(UserProfile profile) async {
-    try {
-      await _firebaseService.createUserProfile(profile);
-      _userProfile = profile;
-      notifyListeners();
-    } catch (e) {
-      print('Error creating user profile: $e');
-    }
-  }
-
   Future<void> updateUserProfile(UserProfile profile) async {
     try {
-      await _firebaseService.updateUserProfile(profile);
-      _userProfile = profile;
+      _userProfile = await _apiService.updateUserProfile(profile);
       notifyListeners();
     } catch (e) {
       print('Error updating user profile: $e');
