@@ -92,6 +92,51 @@ sudo nginx -t && sudo systemctl reload nginx
 
 Once `storage.wisdombusara.com` is live, set `MINIO_PUBLIC_URL=https://storage.wisdombusara.com` in `.env` and restart the API so new photo URLs use the HTTPS domain instead of the bare port.
 
+## 6. Continuous deployment (auto-deploy on push)
+
+Every push to `main` that touches `backend/` triggers [`.github/workflows/deploy-backend.yml`](../.github/workflows/deploy-backend.yml), which SSHs into the VPS and runs [`deploy/deploy.sh`](deploy/deploy.sh) — that pulls the latest code and runs `docker compose up -d --build api`. This is one-time setup; after it's done, deploys are just `git push`.
+
+**On the VPS:**
+
+1. Make a dedicated deploy user (or reuse one you already have) and put it in the `docker` group so it can run `docker compose` without `sudo`:
+   ```bash
+   sudo useradd -m -s /bin/bash kaza-deploy
+   sudo usermod -aG docker kaza-deploy
+   ```
+
+2. Generate a dedicated SSH keypair for GitHub Actions to use — don't reuse your personal key:
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/kaza_deploy_key -N ""
+   sudo -u kaza-deploy mkdir -p /home/kaza-deploy/.ssh
+   cat ~/.ssh/kaza_deploy_key.pub | sudo tee -a /home/kaza-deploy/.ssh/authorized_keys
+   sudo chown -R kaza-deploy:kaza-deploy /home/kaza-deploy/.ssh
+   sudo chmod 700 /home/kaza-deploy/.ssh && sudo chmod 600 /home/kaza-deploy/.ssh/authorized_keys
+   ```
+   Keep `~/.ssh/kaza_deploy_key` (the private half) — it goes into a GitHub secret in step 4, then you're done with the local copy (delete it or keep it somewhere safe, but it never needs to touch your laptop again).
+
+3. Clone the repo once at a fixed path, as that deploy user, and create the real `.env` (steps 1-3 above still apply — this `.env` is never committed):
+   ```bash
+   sudo -u kaza-deploy git clone git@github.com:WisdomBusara/unfat.git /opt/kaza-app
+   cd /opt/kaza-app/backend
+   sudo -u kaza-deploy cp .env.example .env
+   sudo -u kaza-deploy nano .env   # fill in real values
+   chmod +x deploy/deploy.sh
+   ```
+   Run it once by hand to confirm it works before wiring up Actions: `sudo -u kaza-deploy bash deploy/deploy.sh`
+
+4. In the GitHub repo → **Settings → Secrets and variables → Actions**, add:
+
+   | Secret | Value |
+   |---|---|
+   | `VPS_HOST` | Your VPS IP or hostname |
+   | `VPS_USER` | `kaza-deploy` |
+   | `VPS_SSH_KEY` | Contents of `~/.ssh/kaza_deploy_key` (the private key from step 2) |
+   | `KAZA_REPO_PATH` | `/opt/kaza-app` |
+
+That's it — push to `main`, watch the **Actions** tab on GitHub for the run, and `docker compose logs -f api` on the VPS if something looks wrong.
+
+**What this does *not* automate, on purpose:** `.env` changes and database schema changes (`schema.sql`). Both can hold real user data or secrets, so both stay manual — edit `.env` and restart (`docker compose restart api`) by hand, and run new migrations yourself after reviewing them.
+
 ## API surface
 
 | Route | Auth | Purpose |

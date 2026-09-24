@@ -1,0 +1,30 @@
+name: Deploy backend
+
+# Redeploys the Kaza API to the VPS whenever backend/ changes land on main.
+# The VPS does the actual build (docker compose up -d --build), so this
+# workflow only needs to SSH in and kick that off.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and redeploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
+          script: |
+            bash ${{ secrets.KAZA_REPO_PATH }}/backend/deploy/deploy.sh
