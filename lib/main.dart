@@ -37,7 +37,7 @@ class FitnessApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PhotoProvider()),
       ],
       child: MaterialApp(
-        title: 'Fitness Tracker',
+        title: 'Kaza',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,

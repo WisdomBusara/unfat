@@ -1,6 +1,8 @@
-# Fitness Tracker App
+# Kaza
 
-An evidence-based fitness and wellness tracking application built with Flutter and Dart, featuring AI-powered photo analysis and personalized coaching via Claude AI.
+*Kaza* — Swahili for "tighten, strengthen." An evidence-based fitness and wellness tracking application built with Flutter and Dart, featuring AI-powered photo analysis and personalized coaching via Claude AI.
+
+Part of the [wisdombusara.com](https://wisdombusara.com) family — live at **kaza.wisdombusara.com**.
 
 ## Features
 
