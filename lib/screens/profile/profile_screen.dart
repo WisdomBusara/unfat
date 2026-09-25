@@ -81,6 +81,22 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 32),
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  'Kaza',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '@wisdomBusara',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

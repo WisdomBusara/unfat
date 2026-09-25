@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../models/progress_photo.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/kaza_loader.dart';
 
 class PhotoDetailScreen extends StatelessWidget {
   final ProgressPhoto photo;
@@ -60,11 +61,7 @@ class PhotoDetailScreen extends StatelessWidget {
                     child: analyzing
                         ? Row(
                             children: [
-                              const SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
+                              const KazaLoader(size: 16),
                               const SizedBox(width: 12),
                               Text('Analyzing...', style: Theme.of(context).textTheme.bodyMedium),
                             ],

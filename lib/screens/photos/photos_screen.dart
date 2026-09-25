@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/photo_provider.dart';
 import '../../services/camera_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/kaza_loader.dart';
 import 'photo_compare_screen.dart';
 import 'photo_detail_screen.dart';
 
@@ -69,7 +70,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: KazaLoader(size: 36)),
     );
 
     // Weight isn't prompted for here — could add a quick entry step before
@@ -120,7 +121,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _captureAndUpload,
         backgroundColor: AppTheme.accent,
-        foregroundColor: const Color(0xFF06251A),
+        foregroundColor: AppTheme.onAccent,
         child: const Icon(Icons.add_a_photo),
       ),
       body: Column(
@@ -145,7 +146,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
             child: Consumer<PhotoProvider>(
               builder: (context, provider, _) {
                 if (provider.isLoading && provider.getAllPhotos().isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: KazaLoader(size: 32));
                 }
                 final photos = provider.getPhotosByAngle(_selectedAngle);
                 if (photos.isEmpty) {

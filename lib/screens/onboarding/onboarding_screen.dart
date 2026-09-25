@@ -6,6 +6,7 @@ import '../../providers/user_provider.dart';
 import '../../providers/weight_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/kaza_loader.dart';
 import '../home/home_screen.dart';
 
 const _goalOptions = [
@@ -225,11 +226,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ElevatedButton(
             onPressed: (_canAdvance && !_isSubmitting) ? _next : null,
             child: _isSubmitting
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
+                ? const KazaLoader(size: 18, color: AppTheme.onAccent)
                 : Text(_step == 3 ? 'Finish' : 'Next'),
           ),
         ],

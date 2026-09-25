@@ -7,6 +7,7 @@ import '../../providers/workout_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/autocomplete_options_list.dart';
+import '../../widgets/kaza_loader.dart';
 
 const _workoutTypes = ['strength', 'cardio', 'calisthenics', 'mobility', 'combat'];
 
@@ -143,13 +144,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
         actions: [
           TextButton(
             onPressed: (_canSave && !_isSaving) ? _save : null,
-            child: _isSaving
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
+            child: _isSaving ? const KazaLoader(size: 18) : const Text('Save'),
           ),
         ],
       ),

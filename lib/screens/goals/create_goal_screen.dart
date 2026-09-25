@@ -4,6 +4,7 @@ import '../../models/goal.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/goal_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/kaza_loader.dart';
 
 const _goalTypes = [
   ('fat_loss', 'Fat loss', Icons.trending_down),
@@ -102,13 +103,7 @@ class _CreateGoalScreenState extends State<CreateGoalScreen> {
         actions: [
           TextButton(
             onPressed: (_canSave && !_isSaving) ? _save : null,
-            child: _isSaving
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
+            child: _isSaving ? const KazaLoader(size: 18) : const Text('Save'),
           ),
         ],
       ),

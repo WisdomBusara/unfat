@@ -7,6 +7,7 @@ import '../../providers/goal_provider.dart';
 import '../../providers/weight_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/kaza_loader.dart';
 import 'create_goal_screen.dart';
 
 const _weightBasedTypes = ['fat_loss', 'muscle_gain', 'recomposition'];
@@ -103,13 +104,13 @@ class _GoalsScreenState extends State<GoalsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openCreate,
         backgroundColor: AppTheme.accent,
-        foregroundColor: const Color(0xFF06251A),
+        foregroundColor: AppTheme.onAccent,
         child: const Icon(Icons.add),
       ),
       body: Consumer<GoalProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.activeGoals.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: KazaLoader(size: 32));
           }
           if (provider.activeGoals.isEmpty) {
             return _buildEmptyState();
@@ -200,11 +201,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     onPressed:
                         _strategyLoadingFor == goal.id ? null : () => _showAiStrategy(goal),
                     icon: _strategyLoadingFor == goal.id
-                        ? const SizedBox(
-                            height: 16,
-                            width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const KazaLoader(size: 16)
                         : const Icon(Icons.auto_awesome, size: 16),
                     label: const Text('AI strategy'),
                   ),

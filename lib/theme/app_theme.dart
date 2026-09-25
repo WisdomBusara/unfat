@@ -11,6 +11,9 @@ class AppTheme {
   // the same brand rather than two different palettes.
   static const Color accent = Color(0xFF34D399); // emerald-400
   static const Color accentDeep = Color(0xFF10B981); // emerald-500, light-mode contrast
+  // Text/icon color placed on top of the accent (buttons, FABs) — dark
+  // enough for contrast against the light-emerald background.
+  static const Color onAccent = Color(0xFF06251A);
 
   static const Color darkBg = Color(0xFF0B0F0D); // near-black, warm-green undertone
   static const Color darkSurface = Color(0xFF151A17);
@@ -168,7 +171,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accent,
-          foregroundColor: const Color(0xFF06251A),
+          foregroundColor: onAccent,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           textStyle: const TextStyle(fontWeight: FontWeight.w600),

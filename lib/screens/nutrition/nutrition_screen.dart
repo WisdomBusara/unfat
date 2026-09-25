@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/nutrition_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/kaza_loader.dart';
 import 'meal_log_screen.dart';
 
 class NutritionScreen extends StatefulWidget {
@@ -59,7 +60,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openLogger,
         backgroundColor: AppTheme.accent,
-        foregroundColor: const Color(0xFF06251A),
+        foregroundColor: AppTheme.onAccent,
         child: const Icon(Icons.add),
       ),
       body: Consumer<NutritionProvider>(
@@ -194,11 +195,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
               child: OutlinedButton(
                 onPressed: _isAnalyzing ? null : _analyze,
                 child: _isAnalyzing
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const KazaLoader(size: 18)
                     : Text(_analysis == null ? 'Analyze today' : 'Re-analyze'),
               ),
             ),

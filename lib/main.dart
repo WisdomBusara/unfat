@@ -7,8 +7,7 @@ import 'providers/workout_provider.dart';
 import 'providers/nutrition_provider.dart';
 import 'providers/goal_provider.dart';
 import 'providers/photo_provider.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/splash/splash_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -40,16 +39,7 @@ class FitnessApp extends StatelessWidget {
         // switches, but dark is the designed default rather than following
         // system.
         themeMode: ThemeMode.dark,
-        home: Consumer<AuthProvider>(
-          builder: (context, auth, _) {
-            if (auth.isCheckingSession) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-            return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
-          },
-        ),
+        home: const SplashScreen(),
         debugShowCheckedModeBanner: false,
       ),
     );

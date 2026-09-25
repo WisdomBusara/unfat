@@ -5,6 +5,7 @@ import '../../models/workout.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/workout_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/kaza_loader.dart';
 import 'workout_log_screen.dart';
 
 class WorkoutsScreen extends StatefulWidget {
@@ -39,13 +40,13 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openLogger,
         backgroundColor: AppTheme.accent,
-        foregroundColor: const Color(0xFF06251A),
+        foregroundColor: AppTheme.onAccent,
         child: const Icon(Icons.add),
       ),
       body: Consumer<WorkoutProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.workoutHistory.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: KazaLoader(size: 32));
           }
           if (provider.workoutHistory.isEmpty) {
             return _buildEmptyState();
