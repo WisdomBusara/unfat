@@ -1,0 +1,45 @@
+# Copy this file to setup.conf (same directory) and fill in real values:
+#   cp deploy/setup.conf.example deploy/setup.conf
+#
+# setup.conf is gitignored — it holds real secrets and must never be
+# committed. setup.sh sources it directly, so this is plain bash: no spaces
+# around '=', and wrap values in quotes.
+#
+# Avoid single quotes and backslashes inside DB_PASSWORD — it's inserted
+# directly into a SQL statement by setup.sh.
+
+# Where to clone/find the repo on this VPS.
+DEPLOY_PATH="/opt/kaza-app"
+
+# Postgres (must already be running natively on this VPS — setup.sh only
+# creates the 'kaza' database/user in it, it doesn't install Postgres).
+# Only used the first time the 'kaza' role is created; changing it later
+# and re-running setup.sh will NOT update an already-existing role's
+# password (use ALTER USER yourself, then update backend/.env to match).
+DB_PASSWORD=""
+
+# Claude / Anthropic — from console.anthropic.com. Required: there's no
+# safe default to generate. This never ships inside the Flutter app.
+CLAUDE_API_KEY=""
+
+# MinIO — leave blank to auto-generate strong random values on first run.
+MINIO_ACCESS_KEY=""
+MINIO_SECRET_KEY=""
+
+# JWT — leave blank to auto-generate strong random values on first run.
+JWT_ACCESS_SECRET=""
+JWT_REFRESH_SECRET=""
+
+# HTTPS via nginx + certbot. Only attempted when true, and only proceeds if
+# both domains already resolve (in DNS) to this VPS's own public IP — set
+# the Cloudflare records first (DNS-only, not proxied), let them propagate,
+# then re-run setup.sh with this flipped to true.
+SETUP_NGINX=false
+DOMAIN_API="api.wisdombusara.com"
+DOMAIN_STORAGE="storage.wisdombusara.com"
+CERTBOT_EMAIL=""
+
+# Skip the "continue?" prompt before system-level changes (pg_hba.conf
+# edits, postgresql restart, nginx/certbot). Leave false until you've
+# reviewed setup.sh and run it interactively at least once.
+AUTO_CONFIRM=false

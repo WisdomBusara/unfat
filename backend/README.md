@@ -6,6 +6,20 @@ Self-hosted backend for the Kaza app: Dart Frog + Postgres + MinIO, running on y
 
 The Flutter client never talks to Postgres or MinIO directly (no mobile app should hold DB credentials). This API sits in between: it owns auth (JWT), owns the database, owns object storage, and proxies Claude API calls so the Anthropic key never ships inside the app.
 
+## Quick setup (automated)
+
+Steps 1-5 below (Postgres db/user, `.env`, schema/seeds, MinIO + API containers, optionally nginx/certbot) are automated by [`deploy/setup.sh`](deploy/setup.sh). It's idempotent — safe to re-run — and never overwrites an existing `backend/.env` or an already-created Postgres user's password.
+
+```bash
+cp deploy/setup.conf.example deploy/setup.conf
+nano deploy/setup.conf   # fill in DB_PASSWORD, CLAUDE_API_KEY, etc.
+bash deploy/setup.sh
+```
+
+It assumes Postgres and Docker are already installed on the VPS (it won't install either), and prints the values you need for step 6's GitHub Actions secrets at the end. Read through it once before running — it does make system-level changes (a `pg_hba.conf` rule + `postgresql` restart, and optionally nginx/certbot), each gated behind a confirmation prompt unless you set `AUTO_CONFIRM=true`.
+
+The sections below are what it automates, kept as reference and for doing any of it by hand.
+
 ## 1. Postgres setup
 
 You said Postgres is already running on your VPS — just add a database and user for this app:
