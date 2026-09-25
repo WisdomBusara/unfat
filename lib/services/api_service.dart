@@ -278,10 +278,11 @@ class ApiService {
     }
   }
 
-  Future<String> getWeightLossStrategy({int daysToTarget = 90}) async {
+  Future<String> getWeightLossStrategy({int daysToTarget = 90, double? targetWeight}) async {
     try {
       final response = await _dio.post('/ai/weight-loss-strategy', data: {
         'daysToTarget': daysToTarget,
+        if (targetWeight != null) 'targetWeight': targetWeight,
       });
       return response.data['strategy'] as String;
     } on DioException catch (e) {

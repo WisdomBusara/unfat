@@ -30,7 +30,11 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   final currentWeight = latestWeight['weight'] as double;
-  final targetWeight = (profile['target_weight'] as num).toDouble();
+  // Accept a per-goal target override — a user's profile-level target
+  // weight (set at onboarding) and a specific Goal's target can legitimately
+  // differ, and the strategy text should match whichever the caller means.
+  final targetWeight =
+      (body['targetWeight'] as num?)?.toDouble() ?? (profile['target_weight'] as num).toDouble();
   final weightToLose = currentWeight - targetWeight;
   final weeksToTarget = daysToTarget / 7;
   final weeklyRate = weeksToTarget > 0 ? weightToLose / weeksToTarget : 0;

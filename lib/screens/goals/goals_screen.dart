@@ -5,8 +5,11 @@ import '../../models/goal.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/goal_provider.dart';
 import '../../providers/weight_provider.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import 'create_goal_screen.dart';
+
+const _weightBasedTypes = ['fat_loss', 'muscle_gain', 'recomposition'];
 
 const _goalTypeIcons = {
   'fat_loss': Icons.trending_down,
@@ -25,6 +28,9 @@ class GoalsScreen extends StatefulWidget {
 }
 
 class _GoalsScreenState extends State<GoalsScreen> {
+  final _apiService = ApiService();
+  String? _strategyLoadingFor;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +44,56 @@ class _GoalsScreenState extends State<GoalsScreen> {
   Future<void> _openCreate() async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGoalScreen()));
     if (mounted) context.read<GoalProvider>().loadActiveGoals();
+  }
+
+  Future<void> _showAiStrategy(Goal goal) async {
+    setState(() => _strategyLoadingFor = goal.id);
+    try {
+      final daysToTarget = goal.targetDate.difference(DateTime.now()).inDays;
+      final strategy = await _apiService.getWeightLossStrategy(
+        daysToTarget: daysToTarget > 0 ? daysToTarget : 90,
+        targetWeight: goal.targetWeight,
+      );
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).cardTheme.color,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (context) => DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => Padding(
+            padding: const EdgeInsets.all(20),
+            child: ListView(
+              controller: scrollController,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: AppTheme.accent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(goal.title, style: Theme.of(context).textTheme.headlineSmall),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(strategy, style: Theme.of(context).textTheme.bodyLarge),
+              ],
+            ),
+          ),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _strategyLoadingFor = null);
+    }
   }
 
   @override
@@ -136,6 +192,24 @@ class _GoalsScreenState extends State<GoalsScreen> {
             if (goal.targetWeight != null) ...[
               const SizedBox(height: 12),
               _buildWeightProgress(goal),
+              if (_weightBasedTypes.contains(goal.goalType)) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        _strategyLoadingFor == goal.id ? null : () => _showAiStrategy(goal),
+                    icon: _strategyLoadingFor == goal.id
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome, size: 16),
+                    label: const Text('AI strategy'),
+                  ),
+                ),
+              ],
             ] else if (goal.targetReps != null) ...[
               const SizedBox(height: 8),
               Text('Target: ${goal.targetReps} reps', style: Theme.of(context).textTheme.bodyMedium),
