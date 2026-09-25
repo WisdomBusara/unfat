@@ -118,9 +118,11 @@ Every push to `main` that touches `backend/` triggers [`.github/workflows/deploy
    ```
    Keep `~/.ssh/kaza_deploy_key` (the private half) — it goes into a GitHub secret in step 4, then you're done with the local copy (delete it or keep it somewhere safe, but it never needs to touch your laptop again).
 
-3. Clone the repo once at a fixed path, as that deploy user, and create the real `.env` (steps 1-3 above still apply — this `.env` is never committed):
+   **Alternative:** if you'd rather skip the dedicated user/key and just reuse the SSH key and login you already use for this VPS, that works too — it's less isolated (a leaked Actions secret could then log in as you, not just as a scoped deploy user), but it's one less thing to set up. In that case use your existing username as `VPS_USER` and the private half of your existing keypair as `VPS_SSH_KEY` in step 4, and skip straight to step 3.
+
+3. Clone the repo once at a fixed path, and create the real `.env` (steps 1-3 above still apply — this `.env` is never committed). The repo is public, so plain HTTPS works with no credentials — no need for a deploy key or PAT just to `git clone`/`git fetch`:
    ```bash
-   sudo -u kaza-deploy git clone git@github.com:WisdomBusara/unfat.git /opt/kaza-app
+   sudo -u kaza-deploy git clone https://github.com/WisdomBusara/unfat.git /opt/kaza-app
    cd /opt/kaza-app/backend
    sudo -u kaza-deploy cp .env.example .env
    sudo -u kaza-deploy nano .env   # fill in real values
