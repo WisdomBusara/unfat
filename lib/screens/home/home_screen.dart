@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../models/goal.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/goal_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/weight_provider.dart';
 import '../../providers/workout_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/weight_trend_chart.dart';
+import '../goals/create_goal_screen.dart';
+import '../goals/goals_screen.dart';
 import '../nutrition/meal_log_screen.dart';
 import '../nutrition/nutrition_screen.dart';
 import '../photos/photos_screen.dart';
@@ -75,6 +80,7 @@ class _DashboardTabState extends State<_DashboardTab> {
     context.read<UserProvider>().setFromAuth(auth.currentUser!);
     context.read<WeightProvider>().loadWeightHistory();
     context.read<WorkoutProvider>().loadWorkoutHistory();
+    context.read<GoalProvider>().loadActiveGoals();
   }
 
   @override
@@ -95,7 +101,9 @@ class _DashboardTabState extends State<_DashboardTab> {
               const SizedBox(height: 24),
               _buildActionButtons(context),
               const SizedBox(height: 24),
-              _buildRecentWeights(),
+              _buildGoalsSection(context),
+              const SizedBox(height: 24),
+              _buildWeightTrend(),
               const SizedBox(height: 24),
               _buildRecentWorkouts(),
             ],
@@ -204,28 +212,81 @@ class _DashboardTabState extends State<_DashboardTab> {
     );
   }
 
-  Widget _buildRecentWeights() {
-    return Consumer<WeightProvider>(
-      builder: (context, weightProvider, _) {
-        final weights = weightProvider.weightHistory.take(5).toList();
-
-        if (weights.isEmpty) return const SizedBox.shrink();
+  Widget _buildGoalsSection(BuildContext context) {
+    return Consumer<GoalProvider>(
+      builder: (context, provider, _) {
+        final goal = provider.getPrimaryGoal();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Recent weights', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 12),
-            ...weights.map((w) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(DateFormat('MMM d, yyyy').format(w.date)),
-                      Text('${w.weight} kg', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Goals', style: Theme.of(context).textTheme.headlineSmall),
+                TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const GoalsScreen()),
                   ),
-                )),
+                  child: Text(goal == null ? 'Set a goal' : 'View all'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (goal == null)
+              Card(
+                child: ListTile(
+                  leading: Icon(Icons.flag_outlined, color: AppTheme.accent),
+                  title: const Text('No active goal yet'),
+                  subtitle: const Text('Set one to track progress toward it'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CreateGoalScreen()),
+                  ),
+                ),
+              )
+            else
+              _buildGoalPreviewCard(context, goal),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildGoalPreviewCard(BuildContext context, Goal goal) {
+    final daysLeft = goal.targetDate.difference(DateTime.now()).inDays;
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.flag, color: AppTheme.accent),
+        title: Text(goal.title),
+        subtitle: Text(daysLeft >= 0 ? '$daysLeft days left' : '${-daysLeft} days overdue'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const GoalsScreen()),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeightTrend() {
+    return Consumer<WeightProvider>(
+      builder: (context, weightProvider, _) {
+        if (weightProvider.weightHistory.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Weight trend', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
+                child: WeightTrendChart(entries: weightProvider.weightHistory),
+              ),
+            ),
           ],
         );
       },
