@@ -4,8 +4,8 @@
 #
 # Assumes the repo is already cloned on the VPS and backend/.env already
 # exists there (see backend/README.md "Continuous Deployment" section for
-# one-time setup). This script never touches .env or the database schema —
-# both are deliberately manual steps.
+# one-time setup). This script never touches .env, schema.sql, or
+# seeds/*.sql — all three are deliberately manual steps.
 
 set -euo pipefail
 

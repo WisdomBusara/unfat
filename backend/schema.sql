@@ -95,6 +95,37 @@ CREATE TABLE IF NOT EXISTS meals (
 );
 CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, date DESC);
 
+CREATE TABLE IF NOT EXISTS exercises (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name             TEXT NOT NULL,
+    category         TEXT NOT NULL, -- resistance, cardio, calisthenics, mobility, combat, yoga
+    primary_muscles  JSONB NOT NULL DEFAULT '[]',
+    secondary_muscles JSONB NOT NULL DEFAULT '[]',
+    equipment        TEXT DEFAULT 'none',
+    difficulty       TEXT DEFAULT 'intermediate', -- beginner, intermediate, advanced
+    movement_pattern TEXT,
+    notes            TEXT DEFAULT '',
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_exercises_name ON exercises (lower(name));
+CREATE INDEX IF NOT EXISTS idx_exercises_category ON exercises(category);
+
+CREATE TABLE IF NOT EXISTS foods (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name          TEXT NOT NULL,
+    serving_size  DOUBLE PRECISION NOT NULL DEFAULT 100, -- grams
+    calories      INTEGER NOT NULL,
+    protein       DOUBLE PRECISION NOT NULL DEFAULT 0,
+    carbs         DOUBLE PRECISION NOT NULL DEFAULT 0,
+    fat           DOUBLE PRECISION NOT NULL DEFAULT 0,
+    fiber         DOUBLE PRECISION NOT NULL DEFAULT 0,
+    category      TEXT DEFAULT 'other', -- protein, carbs, fat, vegetable, fruit, grains, dairy, other
+    cuisine       TEXT, -- Kenyan, East African, Mediterranean, etc.
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_foods_name ON foods (lower(name));
+CREATE INDEX IF NOT EXISTS idx_foods_cuisine ON foods(cuisine);
+
 CREATE TABLE IF NOT EXISTS progress_photos (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

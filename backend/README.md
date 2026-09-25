@@ -20,11 +20,15 @@ GRANT ALL PRIVILEGES ON DATABASE kaza TO kaza;
 \q
 ```
 
-Then load the schema:
+Then load the schema, then the exercise/food catalog seed data:
 
 ```bash
 psql -U kaza -d kaza -h localhost -f schema.sql
+psql -U kaza -d kaza -h localhost -f seeds/exercises.sql
+psql -U kaza -d kaza -h localhost -f seeds/foods.sql
 ```
+
+Both seed files are idempotent (`ON CONFLICT` on the name) — safe to rerun after adding more rows to them later. They deliberately aren't run automatically by `deploy.sh`, same reasoning as `schema.sql`: anything touching the database stays a manual, reviewed step.
 
 ## 2. MinIO setup
 
@@ -150,6 +154,8 @@ That's it — push to `main`, watch the **Actions** tab on GitHub for the run, a
 | `GET/POST /workouts` | ✓ | Workout sessions (`?days=90`) |
 | `GET/POST /goals` | ✓ | Active goals |
 | `POST /goals/:id/complete` | ✓ | Mark goal complete |
+| `GET /exercises` | ✓ | Exercise catalog (`?search=&category=&limit=`) |
+| `GET /foods` | ✓ | Food catalog (`?search=&cuisine=&limit=`) |
 | `GET/POST /nutrition/meals` | ✓ | Meals (`?date=YYYY-MM-DD`) |
 | `GET /photos` | ✓ | Progress photos (`?angle=front`) |
 | `POST /photos/upload` | ✓ | Upload + AI analysis (base64 JSON body) |
