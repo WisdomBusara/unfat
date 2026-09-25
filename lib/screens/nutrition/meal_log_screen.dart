@@ -4,12 +4,15 @@ import 'package:uuid/uuid.dart';
 import '../../models/nutrition.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/nutrition_provider.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/autocomplete_options_list.dart';
 
 const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 class _FoodDraft {
   final nameController = TextEditingController();
+  final nameFocusNode = FocusNode();
   final caloriesController = TextEditingController();
   final proteinController = TextEditingController();
   final carbsController = TextEditingController();
@@ -17,6 +20,7 @@ class _FoodDraft {
 
   void dispose() {
     nameController.dispose();
+    nameFocusNode.dispose();
     caloriesController.dispose();
     proteinController.dispose();
     carbsController.dispose();
@@ -33,6 +37,7 @@ class MealLogScreen extends StatefulWidget {
 
 class _MealLogScreenState extends State<MealLogScreen> {
   static const _uuid = Uuid();
+  final _apiService = ApiService();
   String _mealType = 'breakfast';
   final _foods = <_FoodDraft>[_FoodDraft()];
   bool _isSaving = false;
@@ -86,6 +91,15 @@ class _MealLogScreenState extends State<MealLogScreen> {
   }
 
   void _addFood() => setState(() => _foods.add(_FoodDraft()));
+
+  void _fillFromCatalog(_FoodDraft draft, Food food) {
+    setState(() {
+      draft.caloriesController.text = food.calories.toString();
+      draft.proteinController.text = food.protein.toStringAsFixed(1);
+      draft.carbsController.text = food.carbs.toStringAsFixed(1);
+      draft.fatController.text = food.fat.toStringAsFixed(1);
+    });
+  }
 
   void _removeFood(int index) {
     setState(() {
@@ -152,10 +166,38 @@ class _MealLogScreenState extends State<MealLogScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: food.nameController,
-                    decoration: const InputDecoration(labelText: 'Food'),
-                    onChanged: (_) => setState(() {}),
+                  child: Autocomplete<Food>(
+                    textEditingController: food.nameController,
+                    focusNode: food.nameFocusNode,
+                    optionsBuilder: (value) async {
+                      if (value.text.trim().length < 2) return const Iterable<Food>.empty();
+                      try {
+                        return await _apiService.searchFoods(query: value.text.trim());
+                      } catch (_) {
+                        return const Iterable<Food>.empty();
+                      }
+                    },
+                    displayStringForOption: (f) => f.name,
+                    onSelected: (selected) => _fillFromCatalog(food, selected),
+                    fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Food',
+                          helperText: 'Search the catalog or type your own',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      );
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return AutocompleteOptionsList<Food>(
+                        options: options,
+                        onSelected: onSelected,
+                        labelBuilder: (f) => f.name,
+                        subtitleBuilder: (f) => '${f.calories} kcal / 100g',
+                      );
+                    },
                   ),
                 ),
                 if (_foods.length > 1)
@@ -164,6 +206,11 @@ class _MealLogScreenState extends State<MealLogScreen> {
                     onPressed: () => _removeFood(index),
                   ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Values are per 100g — adjust below for your actual portion',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
             Row(

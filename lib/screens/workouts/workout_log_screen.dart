@@ -4,7 +4,9 @@ import 'package:uuid/uuid.dart';
 import '../../models/workout.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/workout_provider.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/autocomplete_options_list.dart';
 
 const _workoutTypes = ['strength', 'cardio', 'calisthenics', 'mobility', 'combat'];
 
@@ -20,10 +22,12 @@ class _SetDraft {
 
 class _ExerciseDraft {
   final nameController = TextEditingController();
+  final nameFocusNode = FocusNode();
   final sets = <_SetDraft>[_SetDraft()];
 
   void dispose() {
     nameController.dispose();
+    nameFocusNode.dispose();
     for (final s in sets) {
       s.dispose();
     }
@@ -39,6 +43,7 @@ class WorkoutLogScreen extends StatefulWidget {
 
 class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   static const _uuid = Uuid();
+  final _apiService = ApiService();
 
   String _workoutType = 'strength';
   final _durationController = TextEditingController(text: '45');
@@ -230,10 +235,38 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: exercise.nameController,
-                    decoration: const InputDecoration(labelText: 'Exercise name'),
-                    onChanged: (_) => setState(() {}),
+                  child: Autocomplete<Exercise>(
+                    textEditingController: exercise.nameController,
+                    focusNode: exercise.nameFocusNode,
+                    optionsBuilder: (value) async {
+                      if (value.text.trim().length < 2) return const Iterable<Exercise>.empty();
+                      try {
+                        return await _apiService.searchExercises(query: value.text.trim());
+                      } catch (_) {
+                        return const Iterable<Exercise>.empty();
+                      }
+                    },
+                    displayStringForOption: (e) => e.name,
+                    onSelected: (_) => setState(() {}),
+                    fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Exercise name',
+                          helperText: 'Search the catalog or type your own',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      );
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return AutocompleteOptionsList<Exercise>(
+                        options: options,
+                        onSelected: onSelected,
+                        labelBuilder: (e) => e.name,
+                        subtitleBuilder: (e) => e.equipment ?? 'no equipment',
+                      );
+                    },
                   ),
                 ),
                 if (_exercises.length > 1)

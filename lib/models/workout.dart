@@ -30,11 +30,21 @@ class Exercise {
   }
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
+    // Two shapes land here: our own toJson() output (targetMuscles), and
+    // the /exercises catalog endpoint (primary_muscles + secondary_muscles
+    // as separate columns) — merge the latter into one list.
+    final targetMuscles = json.containsKey('targetMuscles') || json.containsKey('target_muscles')
+        ? List<String>.from(json['targetMuscles'] ?? json['target_muscles'] ?? [])
+        : [
+            ...List<String>.from(json['primary_muscles'] ?? []),
+            ...List<String>.from(json['secondary_muscles'] ?? []),
+          ];
+
     return Exercise(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       category: json['category'] ?? 'resistance',
-      targetMuscles: List<String>.from(json['targetMuscles'] ?? json['target_muscles'] ?? []),
+      targetMuscles: targetMuscles,
       equipment: json['equipment'],
       difficulty: json['difficulty'] ?? 'intermediate',
       notes: json['notes'] ?? '',

@@ -163,6 +163,35 @@ class ApiService {
     }
   }
 
+  // Catalogs
+  Future<List<Exercise>> searchExercises({String? query, String? category}) async {
+    try {
+      final response = await _dio.get('/exercises', queryParameters: {
+        if (query != null && query.isNotEmpty) 'search': query,
+        if (category != null) 'category': category,
+      });
+      return (response.data as List)
+          .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<List<Food>> searchFoods({String? query, String? cuisine}) async {
+    try {
+      final response = await _dio.get('/foods', queryParameters: {
+        if (query != null && query.isNotEmpty) 'search': query,
+        if (cuisine != null) 'cuisine': cuisine,
+      });
+      return (response.data as List)
+          .map((f) => Food.fromJson(f as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   // Nutrition
   Future<MealEntry> logMeal(MealEntry meal) async {
     try {
