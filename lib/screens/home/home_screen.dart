@@ -8,6 +8,9 @@ import '../../providers/user_provider.dart';
 import '../../providers/weight_provider.dart';
 import '../../providers/workout_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/glass_card.dart';
+import '../../widgets/gradient_mesh_backdrop.dart';
+import '../../widgets/kaza_nav_bar.dart';
 import '../../widgets/weight_trend_chart.dart';
 import '../goals/create_goal_screen.dart';
 import '../goals/goals_screen.dart';
@@ -38,22 +41,26 @@ class _HomeScreenState extends State<HomeScreen> {
     ProfileScreen(),
   ];
 
+  static const _navItems = [
+    KazaNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
+    KazaNavItem(
+      icon: Icons.fitness_center_outlined,
+      activeIcon: Icons.fitness_center,
+      label: 'Workouts',
+    ),
+    KazaNavItem(icon: Icons.camera_alt_outlined, activeIcon: Icons.camera_alt, label: 'Photos'),
+    KazaNavItem(icon: Icons.restaurant_outlined, activeIcon: Icons.restaurant, label: 'Nutrition'),
+    KazaNavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedTab, children: _tabs),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: KazaNavBar(
         currentIndex: _selectedTab,
         onTap: (index) => setState(() => _selectedTab = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppTheme.accent,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.fitness_center_outlined), label: 'Workouts'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt_outlined), label: 'Photos'),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant_outlined), label: 'Nutrition'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-        ],
+        items: _navItems,
       ),
     );
   }
@@ -85,30 +92,39 @@ class _DashboardTabState extends State<_DashboardTab> {
 
   @override
   Widget build(BuildContext context) {
+    // No boxed AppBar here — the greeting doubles as the header, with a
+    // gradient-mesh backdrop behind it rather than a flat title bar.
     return Scaffold(
-      appBar: AppBar(title: const Text('Kaza')),
-      body: RefreshIndicator(
-        onRefresh: () async => _loadUserData(),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGreeting(),
-              const SizedBox(height: 24),
-              _buildQuickStats(),
-              const SizedBox(height: 24),
-              _buildActionButtons(context),
-              const SizedBox(height: 24),
-              _buildGoalsSection(context),
-              const SizedBox(height: 24),
-              _buildWeightTrend(),
-              const SizedBox(height: 24),
-              _buildRecentWorkouts(),
-            ],
+      body: Stack(
+        children: [
+          const Positioned(top: 0, left: 0, right: 0, child: GradientMeshBackdrop()),
+          RefreshIndicator(
+            onRefresh: () async => _loadUserData(),
+            child: SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGreeting(),
+                    const SizedBox(height: 28),
+                    _buildQuickStats(),
+                    const SizedBox(height: 28),
+                    _buildActionButtons(context),
+                    const SizedBox(height: 28),
+                    _buildGoalsSection(context),
+                    const SizedBox(height: 28),
+                    _buildWeightTrend(),
+                    const SizedBox(height: 28),
+                    _buildRecentWorkouts(),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -116,51 +132,110 @@ class _DashboardTabState extends State<_DashboardTab> {
   Widget _buildGreeting() {
     return Consumer<UserProvider>(
       builder: (context, userProvider, _) {
-        final user = userProvider.userProfile;
-        final greeting = 'Welcome back, ${user?.name ?? 'User'}!';
+        final name = userProvider.userProfile?.name ?? 'there';
+        final firstName = name.trim().isEmpty ? 'there' : name.trim().split(' ').first;
         final date = DateFormat('EEEE, MMM d').format(DateTime.now());
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(greeting, style: Theme.of(context).textTheme.headlineSmall),
-            Text(date, style: Theme.of(context).textTheme.bodyMedium),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(date.toUpperCase(), style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        letterSpacing: 0.8,
+                      )),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Hey, $firstName',
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: AppTheme.accent.withOpacity(0.18),
+                child: Text(
+                  firstName[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: AppTheme.accent,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
           ],
         );
       },
     );
   }
 
+  // Bento layout: one hero tile carries the primary number, a stacked pair
+  // of compact tiles carries the secondary ones — current dashboard pattern
+  // rather than a row of equally-weighted cards.
   Widget _buildQuickStats() {
     return Consumer2<WeightProvider, WorkoutProvider>(
       builder: (context, weightProvider, workoutProvider, _) {
         final latestWeight = weightProvider.latestWeight;
         final workoutCount = workoutProvider.getWorkoutCount(days: 7);
         final weightChange = weightProvider.getWeightChange(days: 7);
+        final streak = workoutProvider.getStreakDays();
 
-        return Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                title: 'Current weight',
-                value: latestWeight != null ? latestWeight.weight.toStringAsFixed(1) : '—',
-                unit: 'kg',
-                icon: Icons.monitor_weight_outlined,
+        return SizedBox(
+          height: 172,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 3,
+                child: _HeroStatCard(
+                  title: 'Current weight',
+                  value: latestWeight != null ? latestWeight.weight.toStringAsFixed(1) : '—',
+                  unit: 'kg',
+                  icon: Icons.monitor_weight_outlined,
+                  trendLabel: weightChange != null
+                      ? '${weightChange >= 0 ? '-' : '+'}${weightChange.abs().toStringAsFixed(1)} kg this week'
+                      : null,
+                  trendIsGood: (weightChange ?? 0) >= 0,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                title: 'This week',
-                value: '$workoutCount',
-                unit: workoutCount == 1 ? 'workout' : 'workouts',
-                subtitle: weightChange != null
-                    ? '${weightChange >= 0 ? '-' : '+'}${weightChange.abs().toStringAsFixed(1)} kg'
-                    : null,
-                icon: Icons.bolt_outlined,
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        title: 'This week',
+                        value: '$workoutCount',
+                        unit: workoutCount == 1 ? 'wkt' : 'wkts',
+                        icon: Icons.bolt_outlined,
+                        compact: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Streak',
+                        value: '$streak',
+                        unit: streak == 1 ? 'day' : 'days',
+                        icon: Icons.local_fire_department_outlined,
+                        compact: true,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -331,53 +406,139 @@ class _DashboardTabState extends State<_DashboardTab> {
 
 /// The number is the hero element here, not the label — oversized tabular
 /// numerals per the current dashboard-design pattern, with the unit set
-/// small and inline rather than folded into one string.
+/// small and inline rather than folded into one string. [compact] scales
+/// the number down for the small tiles stacked beside the hero card.
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
   final String unit;
-  final String? subtitle;
   final IconData icon;
+  final bool compact;
 
   const _StatCard({
     required this.title,
     required this.value,
     required this.unit,
     required this.icon,
-    this.subtitle,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(compact ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: Theme.of(context).textTheme.bodySmall),
-                Icon(icon, size: 18, color: AppTheme.accent),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(icon, size: 16, color: AppTheme.accent),
               ],
             ),
-            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(value, style: AppTheme.statNumberStyle(context)),
+                Text(
+                  value,
+                  style: compact
+                      ? AppTheme.statNumberStyle(context).copyWith(fontSize: 24)
+                      : AppTheme.statNumberStyle(context),
+                ),
                 const SizedBox(width: 4),
-                Text(unit, style: Theme.of(context).textTheme.bodyMedium),
+                Text(unit, style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
-            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The bento grid's primary tile — a frosted [GlassCard] over the gradient
+/// mesh backdrop rather than a flat [Card], with a trend chip instead of a
+/// plain subtitle line.
+class _HeroStatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String unit;
+  final IconData icon;
+  final String? trendLabel;
+  final bool trendIsGood;
+
+  const _HeroStatCard({
+    required this.title,
+    required this.value,
+    required this.unit,
+    required this.icon,
+    this.trendLabel,
+    this.trendIsGood = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.bodyMedium),
+              Icon(icon, size: 20, color: AppTheme.accent),
+            ],
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(value, style: AppTheme.statNumberStyle(context).copyWith(fontSize: 44)),
+              const SizedBox(width: 6),
+              Text(unit, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+          if (trendLabel != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: (trendIsGood ? AppTheme.accent : Theme.of(context).colorScheme.error)
+                    .withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    trendIsGood ? Icons.trending_down : Icons.trending_up,
+                    size: 14,
+                    color: trendIsGood ? AppTheme.accent : Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    trendLabel!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: trendIsGood ? AppTheme.accent : Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -400,12 +561,12 @@ class _ActionButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           decoration: BoxDecoration(
             color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white.withOpacity(0.08)
@@ -414,8 +575,15 @@ class _ActionButton extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, color: AppTheme.accent),
-              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.accent.withOpacity(0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: AppTheme.accent, size: 20),
+              ),
+              const SizedBox(height: 8),
               Text(label, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
             ],
           ),
